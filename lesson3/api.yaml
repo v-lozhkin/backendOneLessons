@@ -1,0 +1,75 @@
+openapi: 3.0.3
+info:
+  title: My perfect API!
+  description: My awesome description
+  version: 1.1.0
+servers:
+  - url: 'https://localhost:8000'
+components: #<- здесь мы описываем структуры сущностей, на которые ссылаемся в описании эндпоинтов
+  schemas:
+    User:
+      type: object #<- тип object означает, что мы описываем структуру
+      properties:
+        Id: #<- не забываем, что согласно REST, у каждой сущности (ресурса) обязательно должен быть ID
+          type: integer
+          format: int64
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+paths:
+  /user: #<- URI сущности
+    summary: Работает с сущностями
+    post: #<- используемый HTTP-метод
+      summary: Создает новый объект типа User
+      operationId: CreateUser
+      requestBody: #<- ожидаемое сервером содержимое тела запроса
+        description: Структура объекта User, которую следует передать в теле запроса
+        content: #<- непосредственно сами данные (в данном случае, объект User)
+          application/json: #<- формат данных, здесь мы используем JSON
+            schema: #<- ссылка на схему с полями сущности User в разделе Components
+              $ref: '#/components/schemas/User'
+        required: true #<- необходимо ли передавать тело в данном эндпоинте
+      responses: #<- возможные статусы ответа с описанием ошибок
+        4XX:
+          description: Invalid input
+          content: {} #<- тело ответа
+      x-codegen-request-body-name: body
+    get:
+      summary: Получает объект Юзер
+      requestBody:
+        content: #<- непосредственно сами данные (в данном случае, объект User)
+          application/json: #<- формат данных, здесь мы используем JSON
+            schema: #<- ссылка на схему с полями сущности User в разделе Components
+              $ref: '#/components/schemas/User'
+      responses:
+        200:
+          description: ok
+  /user/{userId}: #<- URI с шаблоном ID сущности User
+    get:
+      summary: Получить объект User по ID
+      operationId: GetUser
+      parameters: #<- список параметров запроса
+        - name: userId #<- имя параметра
+          in: path #<- указание на то, что параметр следует искать в URI
+          description: ID искомого объ User
+          required: true #<- необходимо ли передавать данный параметр
+          schema: #<- тип параметра в данном случае описан здесь, но можно также, как в случае с телом, указать референс на Component
+            type: integer
+            format: int64
+      responses:
+        200: #<- мы также можем описать ответ при успешном выполнении запроса
+          description: successful operation
+          content: #<- описание тела ответа по аналогии с телом запроса
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Передан невалидный ID
+          content: {}
+        404:
+          description: User не найден
+          content: {}
+
