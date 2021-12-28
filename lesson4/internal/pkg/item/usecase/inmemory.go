@@ -1,10 +1,9 @@
 package usecase
 
 import (
-	"backendOneLessons/lesson4/internal/pkg/item"
+	itempkg "backendOneLessons/lesson4/internal/pkg/item"
 	"backendOneLessons/lesson4/internal/pkg/models"
 	"context"
-	"errors"
 )
 
 type inmemory struct {
@@ -42,7 +41,7 @@ func (in inmemory) List(_ context.Context, filter models.ItemFilter) ([]models.I
 	return res, nil
 }
 
-func (in *inmemory) Update(ctx context.Context, item models.Item) error {
+func (in *inmemory) Update(_ context.Context, item models.Item) error {
 	found := false
 	for i, itm := range in.items {
 		if itm.ID == item.ID {
@@ -53,7 +52,7 @@ func (in *inmemory) Update(ctx context.Context, item models.Item) error {
 	}
 
 	if !found {
-		return errors.New("not found")
+		return itempkg.ErrItemNotFound
 	}
 
 	return nil
@@ -70,13 +69,13 @@ func (in *inmemory) Delete(ctx context.Context, id int) error {
 	}
 
 	if !found {
-		return errors.New("not found")
+		return itempkg.ErrItemNotFound
 	}
 
 	return nil
 }
 
-func NewInmemory() item.ItemUsecase {
+func NewInmemory() itempkg.ItemUsecase {
 	return &inmemory{
 		items: []models.Item{
 			{
