@@ -5,10 +5,11 @@ import (
 	"backendOneLessons/lesson4/internal/pkg/models"
 	"context"
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestDelivery_ServeHTTP(t *testing.T) {

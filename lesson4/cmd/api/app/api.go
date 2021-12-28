@@ -1,78 +1,74 @@
 package app
 
 import (
-	"backendOneLessons/lesson4/internal/pkg/image"
+	"backendOneLessons/lesson4/internal/pkg/api/middlewares"
 	imageStore "backendOneLessons/lesson4/internal/pkg/image/storage/fs"
-	"backendOneLessons/lesson4/internal/pkg/item"
-	itemDelivery "backendOneLessons/lesson4/internal/pkg/item/delivery/default_http"
 	echoDelivery "backendOneLessons/lesson4/internal/pkg/item/delivery/echo"
 	"backendOneLessons/lesson4/internal/pkg/item/usecase"
+	userDelivery "backendOneLessons/lesson4/internal/pkg/user/delivery"
+	user "backendOneLessons/lesson4/internal/pkg/user/usecase"
+	"context"
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	echolog "github.com/labstack/gommon/log"
-	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
+
+	"github.com/labstack/echo/v4"
+	echoMiddlewares "github.com/labstack/echo/v4/middleware"
+	echolog "github.com/labstack/gommon/log"
 )
 
 const apiPort = 8000
-const filePort = 8080
+const secretKey = "superdupersecret"
 
 func App() {
 	items := usecase.NewInmemory()
 	images := imageStore.New("/Users/v.lozhkin/go/src/backendOneLessons/lesson4/storage/")
+	users := user.New(map[string]string{"admin": "qwerty"})
+	usersDel := userDelivery.New(users, time.Now().Add(time.Hour*72).Unix(), secretKey)
 
-	startEchoServer(items, images)
-}
-
-func startEchoServer(items item.ItemUsecase, images image.Storage) {
 	delivery := echoDelivery.New(items, images)
 	server := echo.New()
 
-	server.Use(middleware.Recover())
-	server.Use(middleware.Logger())
+	server.Use(echoMiddlewares.Recover())
+	server.Use(echoMiddlewares.Logger())
+	server.Use(middlewares.RequestIDMiddleware())
 	server.Logger.SetLevel(echolog.DEBUG)
+
+	authMiddleware := middlewares.JWTAuthMiddleware(secretKey)
 
 	v1Group := server.Group("/v1")
 	itemsGroup := v1Group.Group("/items")
 	itemsGroup.GET("", delivery.List)
-	itemsGroup.POST("", delivery.Create)
-	itemsGroup.POST("/:id/upload", delivery.Upload)
+	itemsGroup.POST("", delivery.Create, authMiddleware)
+	itemsGroup.POST("/:id/upload", delivery.Upload, authMiddleware)
 	itemsGroup.GET("/:id", delivery.List)
-	itemsGroup.PUT("/:id", delivery.Update)
-	itemsGroup.DELETE("/:id", delivery.Delete)
+	itemsGroup.PUT("/:id", delivery.Update, authMiddleware)
+	itemsGroup.DELETE("/:id", delivery.Delete, authMiddleware)
+
+	v1Group.POST("/user/login", usersDel.Login)
 
 	v1Group.Static("/static", "storage")
 
-	log.Fatal(server.Start(fmt.Sprintf(":%d", apiPort)))
+	go func() {
+		if err := server.Start(fmt.Sprintf(":%d", apiPort)); err != nil && err != http.ErrServerClosed {
+			server.Logger.Fatal(err)
+		}
+	}()
 
-}
+	quite := make(chan os.Signal, 1)
+	signal.Notify(quite, syscall.SIGINT, syscall.SIGTERM)
+	<-quite
+	server.Logger.Info("shutdown inited")
 
-func startApiServer(items item.ItemUsecase, images image.Storage) {
-	itemHandler := itemDelivery.New(items, images)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 
-	http.Handle("/items/", itemHandler)
-
-	server := http.Server{
-		Addr:         fmt.Sprintf(":%d", apiPort),
-		Handler:      nil,
-		ReadTimeout:  time.Second,
-		WriteTimeout: time.Second,
+	if err := server.Shutdown(ctx); err != nil {
+		server.Logger.Fatal(err)
 	}
-
-	log.Printf("api start listening on %d port\n", apiPort)
-	log.Fatal(server.ListenAndServe())
 }
 
-func startFileServer() {
-	server := http.Server{
-		Addr:         fmt.Sprintf(":%d", filePort),
-		Handler:      http.FileServer(http.Dir("/Users/v.lozhkin/go/src/backendOneLessons/lesson4/storage/")),
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-	}
-
-	log.Printf("fs starts listening on %d port\n", filePort)
-	log.Fatal(server.ListenAndServe())
-}
+//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NDA5NzQ0MTgsIk5hbWUiOiJhZG1pbiJ9.bi1d5xTOAE5g8OecF5EsV6IgCEYtgq0O6dChMsBnBXM
