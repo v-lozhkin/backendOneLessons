@@ -1,12 +1,14 @@
 package app
 
 import (
+	"backendOneLessons/lesson4/cmd/api/app/config"
 	"backendOneLessons/lesson4/internal/pkg/api/middlewares"
 	imageStore "backendOneLessons/lesson4/internal/pkg/image/storage/fs"
 	echoDelivery "backendOneLessons/lesson4/internal/pkg/item/delivery/echo"
-	inmemory2 "backendOneLessons/lesson4/internal/pkg/item/repository/inmemory"
+	itemRepo "backendOneLessons/lesson4/internal/pkg/item/repository/inmemory"
+	itemUsecase "backendOneLessons/lesson4/internal/pkg/item/usecase"
 	userDelivery "backendOneLessons/lesson4/internal/pkg/user/delivery"
-	"backendOneLessons/lesson4/internal/pkg/user/repository/inmemory"
+	userRepo "backendOneLessons/lesson4/internal/pkg/user/repository/inmemory"
 	user "backendOneLessons/lesson4/internal/pkg/user/usecase"
 	"context"
 	"fmt"
@@ -19,44 +21,64 @@ import (
 	"github.com/labstack/echo/v4"
 	echoMiddlewares "github.com/labstack/echo/v4/middleware"
 	echolog "github.com/labstack/gommon/log"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-const apiPort = 8000
-const secretKey = "superdupersecret"
-
 func App() {
-	items := inmemory2.New()
-	images := imageStore.New("/Users/v.lozhkin/go/src/backendOneLessons/lesson4/storage/")
-
-	userRepo := inmemory.New()
-	users := user.New(userRepo)
-	usersDel := userDelivery.New(users, time.Now().Add(time.Hour*72).Unix(), secretKey)
-
-	delivery := echoDelivery.New(items, images)
 	server := echo.New()
+	server.Logger.SetLevel(echolog.INFO)
+
+	cfg := config.Config{}
+	cfg.ReadFromFile(server.Logger)
 
 	server.Use(echoMiddlewares.Recover())
 	server.Use(echoMiddlewares.Logger())
 	server.Use(middlewares.RequestIDMiddleware())
-	server.Logger.SetLevel(echolog.DEBUG)
+	loglevel, ok := loglevelMap[cfg.Loglevel]
+	if !ok {
+		loglevel = echolog.INFO
+	}
+	server.Logger.SetLevel(loglevel)
 
-	authMiddleware := middlewares.JWTAuthMiddleware(secretKey)
+	authMiddleware := middlewares.JWTAuthMiddleware(cfg.AuthConfig.JWTSecret)
+
+	itemsRepository := itemRepo.New()
+	userRepository := userRepo.New()
+
+	itemsUsecase := itemUsecase.New(itemsRepository)
+	images := imageStore.New(cfg.StoragePath)
+	usersUsecase := user.New(userRepository)
+
+	stat := promauto.Factory{}
+
+	itemsDelivery := echoDelivery.New(itemsUsecase, images, stat)
+	usersDelivery := userDelivery.New(
+		usersUsecase,
+		time.Now().Add(cfg.AuthConfig.JWTTTL).Unix(),
+		cfg.AuthConfig.JWTSecret,
+	)
 
 	v1Group := server.Group("/v1")
 	itemsGroup := v1Group.Group("/items")
-	itemsGroup.GET("", delivery.List)
-	itemsGroup.POST("", delivery.Create, authMiddleware)
-	itemsGroup.POST("/:id/upload", delivery.Upload, authMiddleware)
-	itemsGroup.GET("/:id", delivery.List)
-	itemsGroup.PUT("/:id", delivery.Update, authMiddleware)
-	itemsGroup.DELETE("/:id", delivery.Delete, authMiddleware)
+	itemsGroup.GET("", itemsDelivery.List)
+	itemsGroup.POST("", itemsDelivery.Create, authMiddleware)
+	itemsGroup.POST("/:id/upload", itemsDelivery.Upload, authMiddleware)
+	itemsGroup.GET("/:id", itemsDelivery.List)
+	itemsGroup.PUT("/:id", itemsDelivery.Update, authMiddleware)
+	itemsGroup.DELETE("/:id", itemsDelivery.Delete, authMiddleware)
 
-	v1Group.POST("/user/login", usersDel.Login)
+	v1Group.POST("/user/login", usersDelivery.Login)
 
 	v1Group.Static("/static", "storage")
 
+	server.Any("/metrics", func(ectx echo.Context) error {
+		promhttp.Handler().ServeHTTP(ectx.Response().Writer, ectx.Request())
+		return nil
+	})
+
 	go func() {
-		if err := server.Start(fmt.Sprintf(":%d", apiPort)); err != nil && err != http.ErrServerClosed {
+		if err := server.Start(fmt.Sprintf(":%d", cfg.Port)); err != nil && err != http.ErrServerClosed {
 			server.Logger.Fatal(err)
 		}
 	}()
@@ -74,4 +96,10 @@ func App() {
 	}
 }
 
-//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NDA5NzQ0MTgsIk5hbWUiOiJhZG1pbiJ9.bi1d5xTOAE5g8OecF5EsV6IgCEYtgq0O6dChMsBnBXM
+var loglevelMap = map[string]echolog.Lvl{
+	"debug": echolog.DEBUG,
+	"info":  echolog.INFO,
+	"error": echolog.ERROR,
+	"warn":  echolog.WARN,
+	"off":   echolog.OFF,
+}

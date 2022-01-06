@@ -8,6 +8,6 @@ type usecase struct {
 	repo item.Repository
 }
 
-func New(repo item.Repository) item.ItemUsecase {
+func New(repo item.Repository) item.Usecase {
 	return usecase{repo: repo}
 }
