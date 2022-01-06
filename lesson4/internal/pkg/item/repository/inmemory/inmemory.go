@@ -58,7 +58,7 @@ func (in *inmemory) Update(_ context.Context, item models.Item) error {
 	return nil
 }
 
-func (in *inmemory) Delete(ctx context.Context, id int) error {
+func (in *inmemory) Delete(_ context.Context, id int) error {
 	found := false
 	for i, itm := range in.items {
 		if itm.ID == id {
@@ -75,7 +75,7 @@ func (in *inmemory) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func New() itempkg.ItemUsecase {
+func New() itempkg.Usecase {
 	return &inmemory{
 		items: []models.Item{
 			{

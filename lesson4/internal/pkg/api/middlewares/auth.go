@@ -10,12 +10,9 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-//Authorization: Basic YWRtaW46cGFzc3dvcmQ=
-//Authorization: Basic admin:password
 func BasicAuthMiddlewareFull(users user.Usecase) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ectx echo.Context) error {
-			//YWRtaW46cGFzc3dvcmQ=
 			auth64 := strings.TrimPrefix(ectx.Request().Header.Get(echo.HeaderAuthorization), "Basic ")
 
 			//admin:password
