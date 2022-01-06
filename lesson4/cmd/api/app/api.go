@@ -4,8 +4,9 @@ import (
 	"backendOneLessons/lesson4/internal/pkg/api/middlewares"
 	imageStore "backendOneLessons/lesson4/internal/pkg/image/storage/fs"
 	echoDelivery "backendOneLessons/lesson4/internal/pkg/item/delivery/echo"
-	"backendOneLessons/lesson4/internal/pkg/item/usecase"
+	inmemory2 "backendOneLessons/lesson4/internal/pkg/item/repository/inmemory"
 	userDelivery "backendOneLessons/lesson4/internal/pkg/user/delivery"
+	"backendOneLessons/lesson4/internal/pkg/user/repository/inmemory"
 	user "backendOneLessons/lesson4/internal/pkg/user/usecase"
 	"context"
 	"fmt"
@@ -24,9 +25,11 @@ const apiPort = 8000
 const secretKey = "superdupersecret"
 
 func App() {
-	items := usecase.NewInmemory()
+	items := inmemory2.New()
 	images := imageStore.New("/Users/v.lozhkin/go/src/backendOneLessons/lesson4/storage/")
-	users := user.New(map[string]string{"admin": "qwerty"})
+
+	userRepo := inmemory.New()
+	users := user.New(userRepo)
 	usersDel := userDelivery.New(users, time.Now().Add(time.Hour*72).Unix(), secretKey)
 
 	delivery := echoDelivery.New(items, images)

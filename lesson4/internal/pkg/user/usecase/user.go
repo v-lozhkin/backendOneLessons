@@ -3,12 +3,12 @@ package usecase
 import "backendOneLessons/lesson4/internal/pkg/user"
 
 type inmemory struct {
-	users map[string]string
+	repo user.Repository
 }
 
 func (i inmemory) Validate(login, password string) bool {
-	for name, pass := range i.users {
-		if name == login && pass == password {
+	for _, usr := range i.repo.List() {
+		if usr.Login == login && usr.Password == password {
 			return true
 		}
 	}
@@ -16,6 +16,6 @@ func (i inmemory) Validate(login, password string) bool {
 	return false
 }
 
-func New(users map[string]string) user.Usecase {
-	return inmemory{users: users}
+func New(repo user.Repository) user.Usecase {
+	return inmemory{repo: repo}
 }

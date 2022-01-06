@@ -1,6 +1,10 @@
 package user
 
-import "github.com/labstack/echo/v4"
+import (
+	"backendOneLessons/lesson4/internal/pkg/models"
+
+	"github.com/labstack/echo/v4"
+)
 
 type Delivery interface {
 	Login(ectx echo.Context) error
@@ -8,4 +12,8 @@ type Delivery interface {
 
 type Usecase interface {
 	Validate(login, password string) bool
+}
+
+type Repository interface {
+	List() []models.User
 }

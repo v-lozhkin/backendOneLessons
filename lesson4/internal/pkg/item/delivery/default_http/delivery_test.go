@@ -1,7 +1,7 @@
 package default_http
 
 import (
-	"backendOneLessons/lesson4/internal/pkg/item/usecase"
+	"backendOneLessons/lesson4/internal/pkg/item/repository/inmemory"
 	"backendOneLessons/lesson4/internal/pkg/models"
 	"context"
 	"encoding/json"
@@ -18,7 +18,7 @@ func TestDelivery_ServeHTTP(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 
-	items := usecase.NewInmemory()
+	items := inmemory.New()
 
 	itemHandler := New(items, nil)
 

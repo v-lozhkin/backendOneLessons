@@ -1,4 +1,4 @@
-package usecase
+package inmemory
 
 import (
 	itempkg "backendOneLessons/lesson4/internal/pkg/item"
@@ -75,7 +75,7 @@ func (in *inmemory) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func NewInmemory() itempkg.ItemUsecase {
+func New() itempkg.ItemUsecase {
 	return &inmemory{
 		items: []models.Item{
 			{
