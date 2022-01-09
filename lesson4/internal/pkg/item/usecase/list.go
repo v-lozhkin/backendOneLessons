@@ -7,6 +7,8 @@ import (
 )
 
 func (u usecase) List(ctx context.Context, filter models.ItemFilter) ([]models.Item, error) {
+	defer u.stat.MethodDuration.WithLabels(map[string]string{"method_name": "List"}).Start().Stop()
+
 	if err := filter.Validate(); err != nil {
 		return nil, fmt.Errorf("item's validate failed: %w", err)
 	}

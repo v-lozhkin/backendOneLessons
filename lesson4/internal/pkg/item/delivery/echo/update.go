@@ -2,19 +2,13 @@ package echo
 
 import (
 	"backendOneLessons/lesson4/internal/pkg/models"
-	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 func (d delivery) Update(ectx echo.Context) error {
-	timer := time.Now()
-	defer func() {
-		d.stat.MethodDuration.With(prometheus.Labels{
-			"method_name": "Update",
-		}).Observe(time.Since(timer).Seconds())
-	}()
+	defer d.stat.MethodDuration.WithLabels(prometheus.Labels{"method_name": "Update"}).Start().Stop()
 
 	request := struct {
 		Item

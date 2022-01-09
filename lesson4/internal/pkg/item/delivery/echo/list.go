@@ -3,21 +3,13 @@ package echo
 import (
 	"backendOneLessons/lesson4/internal/pkg/models"
 	"net/http"
-	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 func (d delivery) List(ectx echo.Context) error {
-	timer := time.Now()
-	defer func() {
-		d.stat.MethodDuration.With(prometheus.Labels{
-			"method_name": "List",
-		}).Observe(time.Since(timer).Seconds())
-	}()
-
-	time.Sleep(time.Millisecond * 490)
+	defer d.stat.MethodDuration.WithLabels(prometheus.Labels{"method_name": "List"}).Start().Stop()
 
 	filter := ItemFilter{}
 	if err := ectx.Bind(&filter); err != nil {

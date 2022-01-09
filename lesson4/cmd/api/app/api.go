@@ -35,22 +35,23 @@ func App() {
 	server.Use(echoMiddlewares.Recover())
 	server.Use(echoMiddlewares.Logger())
 	server.Use(middlewares.RequestIDMiddleware())
+
 	loglevel, ok := loglevelMap[cfg.Loglevel]
 	if !ok {
 		loglevel = echolog.INFO
 	}
 	server.Logger.SetLevel(loglevel)
 
+	stat := promauto.Factory{}
+
 	authMiddleware := middlewares.JWTAuthMiddleware(cfg.AuthConfig.JWTSecret)
 
 	itemsRepository := itemRepo.New()
 	userRepository := userRepo.New()
 
-	itemsUsecase := itemUsecase.New(itemsRepository)
+	itemsUsecase := itemUsecase.New(itemsRepository, stat)
 	images := imageStore.New(cfg.StoragePath)
 	usersUsecase := user.New(userRepository)
-
-	stat := promauto.Factory{}
 
 	itemsDelivery := echoDelivery.New(itemsUsecase, images, stat)
 	usersDelivery := userDelivery.New(
