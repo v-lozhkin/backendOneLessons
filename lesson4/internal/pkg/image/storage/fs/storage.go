@@ -4,6 +4,7 @@ import (
 	"backendOneLessons/lesson4/internal/pkg/image"
 	statpkg "backendOneLessons/lesson4/pkg/stat"
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
