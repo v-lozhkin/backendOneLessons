@@ -41,6 +41,9 @@ func App() {
 	server.Use(echoMiddlewares.Recover())
 	server.Use(echoMiddlewares.Logger())
 	server.Use(middlewares.RequestIDMiddleware())
+	server.Use(echoMiddlewares.TimeoutWithConfig(echoMiddlewares.TimeoutConfig{
+		Timeout: time.Second * 10,
+	}))
 
 	loglevel, ok := loglevelMap[cfg.Loglevel]
 	if !ok {
