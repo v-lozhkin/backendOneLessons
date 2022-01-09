@@ -3,6 +3,7 @@ package delivery
 import (
 	"backendOneLessons/lesson4/internal/pkg/user"
 	"net/http"
+	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
@@ -56,6 +57,8 @@ func (d delivery) Login(ectx echo.Context) error {
 	if err != nil {
 		return err
 	}
+
+	ectx.Response().Header().Set("X-Expires-After", time.Unix(d.ttl, 0).String())
 
 	return ectx.JSON(http.StatusOK, signedToken)
 }

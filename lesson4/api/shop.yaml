@@ -4,7 +4,7 @@ info:
   description: My online shop REST API
   version: 1.0.0
 servers:
-  - url: 'http://localhost:8000/'
+  - url: 'http://localhost:8000/v1'
 components:
   schemas:
     User:
@@ -48,19 +48,19 @@ paths:
       tags:
         - User
       operationId: loginUser
-      parameters:
-        - name: username
-          in: query
-          description: The user name for login
-          required: true
-          schema:
-            type: string
-        - name: password
-          in: query
-          description: The password for login in clear text
-          required: true
-          schema:
-            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - login
+                - password
+              properties:
+                login:
+                  type: string
+                password:
+                  type: string
       responses:
         200:
           description: successful operation
@@ -76,16 +76,6 @@ paths:
                 type: string
         400:
           description: Invalid username/password supplied
-          content: { }
-  /user/logout:
-    post:
-      tags:
-        - User
-      summary: Logs out current logged in user session
-      operationId: logoutUser
-      responses:
-        200:
-          description: successful logout
           content: { }
   /items/:
     post:
