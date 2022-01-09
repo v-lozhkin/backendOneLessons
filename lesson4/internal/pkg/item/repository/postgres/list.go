@@ -9,6 +9,8 @@ import (
 )
 
 func (r repository) List(ctx context.Context, filter models.ItemFilter) (models.ItemList, error) {
+	defer r.stat.MethodDuration.WithLabels(map[string]string{"method_name": "List"}).Start().Stop()
+
 	res := repomodels.ItemList{}
 
 	query := strings.Builder{}

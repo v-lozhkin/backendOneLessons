@@ -7,11 +7,10 @@ import (
 	"path/filepath"
 
 	"github.com/labstack/echo/v4"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 func (d delivery) Upload(ectx echo.Context) error {
-	defer d.stat.MethodDuration.WithLabels(prometheus.Labels{"method_name": "Upload"}).Start().Stop()
+	defer d.stat.MethodDuration.WithLabels(map[string]string{"method_name": "Upload"}).Start().Stop()
 
 	ctx := ectx.Request().Context()
 	filter := ItemFilter{}
@@ -59,7 +58,7 @@ func (d delivery) Upload(ectx echo.Context) error {
 		extension = ext
 	}
 
-	d.stat.ExtensionCounter.With(prometheus.Labels{"extension": extension}).Inc()
+	d.stat.ExtensionCounter.With(map[string]string{"extension": extension}).Inc()
 
 	return ectx.JSON(http.StatusOK, existing[0])
 }

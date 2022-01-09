@@ -8,6 +8,8 @@ import (
 )
 
 func (r repository) Create(ctx context.Context, item *models.Item) error {
+	defer r.stat.MethodDuration.WithLabels(map[string]string{"method_name": "Create"}).Start().Stop()
+
 	query := "INSERT INTO item (name, description, price, image_link) VALUES " +
 		"(:name, :description, :price, :image_link) RETURNING id"
 	res, err := r.db.NamedQueryContext(ctx,

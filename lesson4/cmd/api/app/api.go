@@ -17,7 +17,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	// postgres driver
 
 	"github.com/jmoiron/sqlx"
 
@@ -25,6 +24,7 @@ import (
 	echoMiddlewares "github.com/labstack/echo/v4/middleware"
 	echolog "github.com/labstack/gommon/log"
 
+	// postgres driver
 	_ "github.com/lib/pq"
 
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -66,7 +66,7 @@ func App() {
 		server.Logger.Fatalf("failed to open db connection %v", err)
 	}
 
-	itemsRepository := itemPostgresRepo.New(db)
+	itemsRepository := itemPostgresRepo.New(db, stat)
 
 	userRepository := userRepo.New()
 

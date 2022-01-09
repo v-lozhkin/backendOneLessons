@@ -5,11 +5,10 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 func (d delivery) Update(ectx echo.Context) error {
-	defer d.stat.MethodDuration.WithLabels(prometheus.Labels{"method_name": "Update"}).Start().Stop()
+	defer d.stat.MethodDuration.WithLabels(map[string]string{"method_name": "Update"}).Start().Stop()
 
 	request := struct {
 		Item
