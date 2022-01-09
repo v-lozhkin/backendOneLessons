@@ -17,20 +17,29 @@ func (r repository) List(ctx context.Context, filter models.ItemFilter) (models.
 	query.WriteString("SELECT * FROM item where true")
 	args := make([]interface{}, 0)
 
+	counter := 0
 	if filter.ID != nil {
-		query.WriteString(" and id = ?")
+		counter++
+		query.WriteString(fmt.Sprintf(" and id = $%d", counter))
 		args = append(args, *filter.ID)
 	}
 	if filter.PriceMax != nil {
-		query.WriteString(" and price <=  ?")
+		counter++
+		query.WriteString(fmt.Sprintf(" and price <=  $%d", counter))
 		args = append(args, *filter.PriceMax)
 	}
 	if filter.PriceMin != nil {
-		query.WriteString(" and price >=")
+		counter++
+		query.WriteString(fmt.Sprintf(" and price >= $%d", counter))
 		args = append(args, *filter.PriceMin)
 	}
 
-	if err := r.db.SelectContext(ctx, &res, query.String(), args...); err != nil {
+	stmt, err := r.db.PreparexContext(ctx, query.String())
+	if err != nil {
+		return nil, fmt.Errorf("faield to prepare statement: %w", err)
+	}
+
+	if err = stmt.SelectContext(ctx, &res, args...); err != nil {
 		return nil, fmt.Errorf("failed to select item from db: %w", err)
 	}
 
