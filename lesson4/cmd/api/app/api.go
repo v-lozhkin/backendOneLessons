@@ -50,7 +50,7 @@ func App() {
 	userRepository := userRepo.New()
 
 	itemsUsecase := itemUsecase.New(itemsRepository, stat)
-	images := imageStore.New(cfg.StoragePath)
+	images := imageStore.New(cfg.StoragePath, stat)
 	usersUsecase := user.New(userRepository)
 
 	itemsDelivery := echoDelivery.New(itemsUsecase, images, stat)
