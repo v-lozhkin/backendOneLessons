@@ -20,11 +20,11 @@ func (d delivery) List(ectx echo.Context) error {
 	if err != nil {
 		return convertToEchoError(err)
 	}
-	if len(list) == 0 && filter.ID != 0 {
+	if len(list) == 0 && filter.ID != nil && *filter.ID != 0 {
 		return echo.ErrNotFound
 	}
 
-	if filter.ID == 0 {
+	if filter.ID == nil || *filter.ID == 0 {
 		return ectx.JSON(http.StatusOK, list)
 	}
 

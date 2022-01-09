@@ -6,32 +6,32 @@ import (
 	"context"
 )
 
-type inmemory struct {
-	iterator int // race unsafe
+type repository struct {
+	iterator int64 // race unsafe
 	items    []models.Item
 }
 
-func (in *inmemory) Create(_ context.Context, item *models.Item) error {
-	item.ID = in.iterator
-	in.iterator++
+func (r *repository) Create(_ context.Context, item *models.Item) error {
+	item.ID = r.iterator
+	r.iterator++
 
-	in.items = append(in.items, *item)
+	r.items = append(r.items, *item)
 
 	return nil
 }
 
-func (in inmemory) List(_ context.Context, filter models.ItemFilter) ([]models.Item, error) {
-	res := make([]models.Item, 0, in.iterator)
-	for _, val := range in.items {
-		if filter.ID != 0 && filter.ID != val.ID {
+func (r repository) List(_ context.Context, filter models.ItemFilter) (models.ItemList, error) {
+	res := make([]models.Item, 0, r.iterator)
+	for _, val := range r.items {
+		if filter.ID != nil && *filter.ID != val.ID {
 			continue
 		}
 
-		if filter.PriceMax != 0 && filter.PriceMax < val.Price {
+		if filter.PriceMax != nil && *filter.PriceMax < val.Price {
 			continue
 		}
 
-		if filter.PriceMin != 0 && filter.PriceMin > val.Price {
+		if filter.PriceMin != nil && *filter.PriceMin > val.Price {
 			continue
 		}
 
@@ -41,11 +41,11 @@ func (in inmemory) List(_ context.Context, filter models.ItemFilter) ([]models.I
 	return res, nil
 }
 
-func (in *inmemory) Update(_ context.Context, item models.Item) error {
+func (r *repository) Update(_ context.Context, item models.Item) error {
 	found := false
-	for i, itm := range in.items {
+	for i, itm := range r.items {
 		if itm.ID == item.ID {
-			in.items = append(append(in.items[:i], item), in.items[i+1:]...)
+			r.items = append(append(r.items[:i], item), r.items[i+1:]...)
 			found = true
 			break
 		}
@@ -58,11 +58,11 @@ func (in *inmemory) Update(_ context.Context, item models.Item) error {
 	return nil
 }
 
-func (in *inmemory) Delete(_ context.Context, id int) error {
+func (r *repository) Delete(_ context.Context, id int64) error {
 	found := false
-	for i, itm := range in.items {
+	for i, itm := range r.items {
 		if itm.ID == id {
-			in.items = append(in.items[:i], in.items[i+1:]...)
+			r.items = append(r.items[:i], r.items[i+1:]...)
 			found = true
 			break
 		}
@@ -76,7 +76,7 @@ func (in *inmemory) Delete(_ context.Context, id int) error {
 }
 
 func New() itempkg.Usecase {
-	return &inmemory{
+	return &repository{
 		items: []models.Item{
 			{
 				ID:          1,

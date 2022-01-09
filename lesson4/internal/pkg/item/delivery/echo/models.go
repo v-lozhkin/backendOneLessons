@@ -1,7 +1,7 @@
 package echo
 
 type Item struct {
-	ID          int    `json:"id"`
+	ID          int64  `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Price       int    `json:"price"`
@@ -9,7 +9,7 @@ type Item struct {
 }
 
 type ItemFilter struct {
-	ID       int `param:"id"`
-	PriceMin int `query:"price_min"`
-	PriceMax int `query:"price_max"`
+	ID       *int64 `param:"id"`
+	PriceMin *int   `query:"price_min"`
+	PriceMax *int   `query:"price_max"`
 }

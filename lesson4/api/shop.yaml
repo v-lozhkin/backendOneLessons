@@ -77,7 +77,7 @@ paths:
         400:
           description: Invalid username/password supplied
           content: { }
-  /items/:
+  /items:
     post:
       tags:
         - Item
