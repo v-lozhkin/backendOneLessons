@@ -25,7 +25,7 @@ type EchoDelivery interface {
 	Upload(ectx echo.Context) error
 }
 
-type ItemUsecase interface {
+type Usecase interface {
 	Create(ctx context.Context, item *models.Item) error
 	List(ctx context.Context, filter models.ItemFilter) ([]models.Item, error)
 	Update(ctx context.Context, item models.Item) error

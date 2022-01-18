@@ -7,6 +7,8 @@ import (
 )
 
 func (u usecase) Create(ctx context.Context, item *models.Item) error {
+	defer u.stat.MethodDuration.WithLabels(map[string]string{"method_name": "Create"}).Start().Stop()
+
 	if err := item.Validate(); err != nil {
 		return fmt.Errorf("item's validate failed: %w", err)
 	}
