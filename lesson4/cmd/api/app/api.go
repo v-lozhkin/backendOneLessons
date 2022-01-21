@@ -5,7 +5,7 @@ import (
 	"backendOneLessons/lesson4/internal/pkg/api/middlewares"
 	imageStore "backendOneLessons/lesson4/internal/pkg/image/storage/fs"
 	echoDelivery "backendOneLessons/lesson4/internal/pkg/item/delivery/echo"
-	itemRepo "backendOneLessons/lesson4/internal/pkg/item/repository/inmemory"
+	itemPostgresRepo "backendOneLessons/lesson4/internal/pkg/item/repository/postgres"
 	itemUsecase "backendOneLessons/lesson4/internal/pkg/item/usecase"
 	userDelivery "backendOneLessons/lesson4/internal/pkg/user/delivery"
 	userRepo "backendOneLessons/lesson4/internal/pkg/user/repository/inmemory"
@@ -18,9 +18,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/labstack/echo/v4"
 	echoMiddlewares "github.com/labstack/echo/v4/middleware"
 	echolog "github.com/labstack/gommon/log"
+
+	// postgres driver
+	_ "github.com/lib/pq"
+
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -35,6 +41,9 @@ func App() {
 	server.Use(echoMiddlewares.Recover())
 	server.Use(echoMiddlewares.Logger())
 	server.Use(middlewares.RequestIDMiddleware())
+	server.Use(echoMiddlewares.TimeoutWithConfig(echoMiddlewares.TimeoutConfig{
+		Timeout: time.Second * 10,
+	}))
 
 	loglevel, ok := loglevelMap[cfg.Loglevel]
 	if !ok {
@@ -46,7 +55,22 @@ func App() {
 
 	authMiddleware := middlewares.JWTAuthMiddleware(cfg.AuthConfig.JWTSecret)
 
-	itemsRepository := itemRepo.New()
+	db, err := sqlx.Open(
+		"postgres",
+		fmt.Sprintf("user=%s password=%s port=%d dbname=%s sslmode=disable host=%s",
+			cfg.DBConfig.User,
+			cfg.DBConfig.Password,
+			cfg.DBConfig.Port,
+			cfg.DBConfig.DBName,
+			cfg.DBConfig.Host,
+		),
+	)
+	if err != nil {
+		server.Logger.Fatalf("failed to open db connection %v", err)
+	}
+
+	itemsRepository := itemPostgresRepo.New(db, stat)
+
 	userRepository := userRepo.New()
 
 	itemsUsecase := itemUsecase.New(itemsRepository, stat)

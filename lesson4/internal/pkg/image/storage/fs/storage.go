@@ -4,6 +4,7 @@ import (
 	"backendOneLessons/lesson4/internal/pkg/image"
 	statpkg "backendOneLessons/lesson4/pkg/stat"
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,7 +23,7 @@ type fs struct {
 func (f fs) Save(_ context.Context, filename string, data []byte) (string, error) {
 	defer f.stat.MethodDuration.WithLabels(map[string]string{"method_name": "Save"}).Start().Stop()
 
-	path := f.basePath + filename
+	path := fmt.Sprintf("%s/%s", f.basePath, filename)
 	file, err := os.Create(path)
 	if err != nil {
 		return "", err

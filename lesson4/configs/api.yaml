@@ -1,6 +1,12 @@
 port: 8000
 loglevel: debug
-storage_path: storage
+storage_path: ./storage
 auth_config:
   jwt_secret: "superdupersecret"
   jwt_ttl: 72h
+db_config:
+  host: 0.0.0.0
+  user: postgres
+  password: mysecretpassword
+  db_name: onlineshop
+  port: 5432

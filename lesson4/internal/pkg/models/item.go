@@ -3,7 +3,7 @@ package models
 import "errors"
 
 type Item struct {
-	ID          int    `json:"id"`
+	ID          int64  `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Price       int    `json:"price"`
@@ -22,14 +22,16 @@ func (i Item) Validate() error {
 	return nil
 }
 
+type ItemList []Item
+
 type ItemFilter struct {
-	ID       int
-	PriceMin int
-	PriceMax int
+	ID       *int64
+	PriceMin *int
+	PriceMax *int
 }
 
 func (i ItemFilter) Validate() error {
-	if i.PriceMax < i.PriceMin {
+	if i.PriceMax != nil && i.PriceMin != nil && (*i.PriceMax < *i.PriceMin) {
 		return errors.New("wrong price range")
 	}
 

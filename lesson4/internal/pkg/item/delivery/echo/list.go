@@ -5,11 +5,10 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 func (d delivery) List(ectx echo.Context) error {
-	defer d.stat.MethodDuration.WithLabels(prometheus.Labels{"method_name": "List"}).Start().Stop()
+	defer d.stat.MethodDuration.WithLabels(map[string]string{"method_name": "List"}).Start().Stop()
 
 	filter := ItemFilter{}
 	if err := ectx.Bind(&filter); err != nil {
@@ -20,11 +19,11 @@ func (d delivery) List(ectx echo.Context) error {
 	if err != nil {
 		return convertToEchoError(err)
 	}
-	if len(list) == 0 && filter.ID != 0 {
+	if len(list) == 0 && filter.ID != nil && *filter.ID != 0 {
 		return echo.ErrNotFound
 	}
 
-	if filter.ID == 0 {
+	if filter.ID == nil || *filter.ID == 0 {
 		return ectx.JSON(http.StatusOK, list)
 	}
 
