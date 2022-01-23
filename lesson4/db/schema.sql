@@ -14,3 +14,5 @@ CREATE TABLE IF NOT EXISTS item
 
 CREATE ROLE shopapi WITH LOGIN PASSWORD 'jw8s0F4';
 GRANT ALL PRIVILEGES ON DATABASE onlineshop TO shopapi;
+GRANT ALL ON item to shopapi;
+GRANT ALL ON item_id_seq to shopapi;

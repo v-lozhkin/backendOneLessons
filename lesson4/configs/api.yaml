@@ -5,8 +5,8 @@ auth_config:
   jwt_secret: "superdupersecret"
   jwt_ttl: 72h
 db_config:
-  host: 0.0.0.0
-  user: postgres
-  password: mysecretpassword
+  host: postgres
+  user: shopapi
+  password: jw8s0F4
   db_name: onlineshop
   port: 5432

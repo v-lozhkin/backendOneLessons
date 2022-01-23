@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  shopapi:
+    build:
+      context: ./
+      dockerfile: build/package/Dockerfile
+    ports:
+      - "8000:8000"
+    links:
+      - postgres
+  postgres:
+    image: postgres:14.1
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./db/:/docker-entrypoint-initdb.d
